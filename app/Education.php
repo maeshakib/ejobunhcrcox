@@ -10,4 +10,6 @@ class Education extends Model
     protected $fillable = [
         'degree_title', 'begin_date','end_date','level_of_education','school_name'
     ];
+
+    
 }

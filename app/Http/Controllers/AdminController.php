@@ -38,7 +38,7 @@ class AdminController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth:api');
+        $this->middleware('auth:api', ['except' => ['login','register']]);
        
                
     }
@@ -183,12 +183,12 @@ class AdminController extends Controller
       
       //return $request->status;
       if($request->status== 2){
-        $users=User::with('role:id,name,status,is_deletable','designation:id,name','department:id,name','location_area:id,name,parent_id,location_level_id,lat_lng,map_data', 'my_manager')
-        ->select('id','name','email','role_id','join_date','mobile_no','photo','designation_id','department_id','supervisor_id','gender','location_area_id','is_supervisor','status')->whereIn('status',[0,1])->get();
+        $users=User::with('role:id,name,status,is_deletable','designation:id,name','department:id,name', 'my_manager')
+        ->select('id','name','email','role_id','join_date','mobile_no','photo','designation_id','department_id','supervisor_id','gender','is_supervisor','status')->whereIn('status',[0,1])->get();
         return response()->json($users,200);
     }else{
-        $users=User::with('role:id,name,status,is_deletable','designation:id,name','department:id,name','location_area:id,name,parent_id,location_level_id,lat_lng,map_data', 'my_manager')
-        ->select('id','name','email','role_id','join_date','mobile_no','photo','designation_id','department_id','supervisor_id','gender','location_area_id','is_supervisor','status')->where('status',$request->status)->get();
+        $users=User::with('role:id,name,status,is_deletable','designation:id,name','department:id,name','my_manager')
+        ->select('id','name','email','role_id','join_date','mobile_no','photo','designation_id','department_id','supervisor_id','gender','is_supervisor','status')->where('status',$request->status)->get();
         return response()->json($users,200);
     }
     
@@ -341,4 +341,85 @@ class AdminController extends Controller
 
     } //end function
  
+//admin login start here
+public function login(Request $request)
+{
+    $credentials = $request->only('email', 'password');
+    $rules = [
+        'email' => 'required|email',
+        'password' => 'required',
+    ];
+    $validator = Validator::make($credentials, $rules);
+    if($validator->fails()) {
+        return response()->json([
+            'success' => false,
+            'errors' => $validator->errors(),
+        ]);
+    }
+    try {
+        // Attempt to verify the credentials and create a token for the user
+        if (! $token = JWTAuth::attempt($credentials)) {
+            return response()->json([
+                'success' => false, 
+                'error' => 'We can`t find an account with this credentials.'
+            ], 200);
+        }
+    } catch (JWTException $e) {
+        // Something went wrong with JWT Auth.
+        return response()->json([
+            'success' => false, 
+            'errors' => $e->errors()
+        ], 200);
+    }
+    // All good so return the token
+    return $this->respondWithToken($token);
+   
+}
+
+
+
+
+protected function respondWithToken($token)
+{
+   //get current user id
+   $user = Auth::user();
+
+
+   $user_role_perse_int=$user->role_id;
+   $menus = DB::table('permissions')
+        ->leftjoin('role_permissions', function ($join) use($user_role_perse_int) {
+           $join->on('role_permissions.permission_id', '=' , 'permissions.id') ;
+           $join->where('role_permissions.role_id',$user_role_perse_int) ;
+       })
+       ->select('permissions.id','permissions.name',
+        DB::raw('cast(ifnull(role_permissions.permission_id, 0) as integer) as permission_id'),
+        DB::raw('cast(ifnull(permissions.parent_id, 0) as integer) as parent_id'))->get();
+
+   $parents = $menus->where('parent_id', null)->values();
+   
+   foreach ($parents as $parent) 
+   {
+       $data[$parent->name]= $parent;
+       $data[$parent->name]->child = $menus->where('parent_id', $parent->id)->values();
+   }
+
+
+
+
+
+    //response 
+    return response()->json([
+        'success' => true,
+        'message' =>'Saved Successfully',
+        'access_token' => $token,
+        'token_type' => 'bearer',
+        'expires_in' => auth('api')->factory()->getTTL() * 10000000,            
+        'raw_data' => $data,
+       
+      
+    ]);
+ 
+}
+//admin login end here
+
 }

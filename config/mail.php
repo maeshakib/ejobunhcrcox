@@ -57,7 +57,7 @@ return [
 
     'from' => [
         'address' => env('MAIL_FROM_ADDRESS', 'ehasanshakib@gmail.com'),
-        'name' => env('MAIL_FROM_NAME', 'One Pharma Ltd.'),
+        'name' => env('MAIL_FROM_NAME', 'ehasanshakib@gmail.com'),
     ],
 
     /*
@@ -84,9 +84,9 @@ return [
     |
     */
 
-    'username' => env('MAIL_USERNAME'),
+    'username' => 'ehasanshakib@gmail.com',
 
-    'password' => env('MAIL_PASSWORD'),
+    'password' => 'myphonenumberis01753414710',
 
     /*
     |--------------------------------------------------------------------------

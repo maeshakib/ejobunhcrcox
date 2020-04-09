@@ -111,4 +111,15 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->belongsTo(Depot::class, 'depot_id');
     }
+
+    //
+    public function educations()
+    {
+        return $this->hasMany('App\Education');
+    }
+    public function work_experiences()
+    {
+        return $this->hasMany('App\WorkExperience');
+    }
+  
 }

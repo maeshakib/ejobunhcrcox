@@ -30,6 +30,6 @@ class SendMail extends Mailable
     {
         $contractor = $this->dd;
 
-        return $this->view('mail',compact('contractor'))->subject('One Pharma Ltd password reset instructions');
+        return $this->view('mail',compact('contractor'))->subject('UNHCR,Coxsbazar password reset instructions');
     }
 }

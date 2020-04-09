@@ -16,7 +16,8 @@
 
 namespace App\Http\Controllers;
 use JWTAuth;
-
+use Mail;
+use App\Mail\SendMail;
 use DB;
 use App\User;
 use Validator;
@@ -31,7 +32,7 @@ class UserLoginController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['login','register']]);
+        $this->middleware('auth:api', ['except' => ['login','register','signup','send']]);
        
                
     }
@@ -64,7 +65,8 @@ class UserLoginController extends Controller
                 'errors' => $e->errors()
             ], 200);
         }
-        // All good so return the token
+        // All good so
+        // return the token
         return $this->respondWithToken($token);
        
     }
@@ -108,6 +110,7 @@ class UserLoginController extends Controller
             'token_type' => 'bearer',
             'expires_in' => auth('api')->factory()->getTTL() * 10000000,            
             'raw_data' => $data,
+            'u_id' => $user->id,
            
           
         ]);
@@ -234,8 +237,7 @@ auth()->logout(true);
         //if user with mail id authentic then create otp save otop to db and send mail with otp
         //       
        
-
-        $user_check = User::find($request->input('email'));
+        $user_check = User::where('email',$request->input('email'))->firstOrFail();
         if (!$user_check) 
         {
             return response()->json([
@@ -244,6 +246,7 @@ auth()->logout(true);
             ], 400);
         }else
         {
+
             Mail::to($request->input('email'))->send(new SendMail($this->otp()));
             return response()->json(['success' => false, 'message' =>'Email sent successfully. Check your email'], 200);
     
@@ -298,5 +301,66 @@ auth()->logout(true);
             return response()->json(['success' => true, 200]);
         }
     }
+//user signup function start
+  //Submit create user form with data
+  public function signup(Request $request)
+  {
+      //return $request->all();
 
+      $rules = array(
+          'name' => 'required',
+          'email' => 'required|email|unique:users',
+          'password' => 'required',
+          'mobile_no' => 'required',              
+      );
+
+      $messages=array(
+          'name.required' => 'Please enter Name',
+          'email.required' => 'Please enter Email',
+          'password.required' => 'Please enter Password',
+          'mobile_no.required' => 'Please enter Mobile',     
+      ); 
+
+      $validator = Validator::make($request->all(), $rules, $messages);
+
+      if($validator->fails())
+      {
+          $returnMessage = array(
+              'success' => false,
+              'errors' => $validator->errors(),
+              );
+          return response()->json($returnMessage, 406);
+      }
+      $user = new User();
+      $user->name = $request->name;
+      $user->email = $request->email;
+      $user->password = bcrypt($request->password);
+      $user->role_id =5;
+      $user->gender = $request->gender;   
+
+      $saved = $user->save();
+
+   
+
+      if($saved)
+      {
+          return response()->json(['success' => true, 'message' =>'Saved Successfully'], 200); 
+      }else{
+          return response()->json(['success' => false, 'message' =>'Oops!!'], 200);
+      }
+
+    
+  } //end function
+
+//user signup function end
+private function otp($length = 4) 
+    {
+            $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            $charactersLength = strlen($characters);
+            $randomString = '';
+            for ($i = 0; $i < $length; $i++) {
+                $randomString .= $characters[rand(0, $charactersLength - 1)];
+            }
+            return $randomString;
+    }
 }

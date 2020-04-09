@@ -242,7 +242,8 @@ class SaleController extends Controller
             => function($q) use($from_date,$to_date)
             {
                 $q->whereBetween('sales_date',[$from_date,$to_date])
-                ->orderBy('sales_date','desc')->select(['id','sales_amount', 'sales_date','payment_status', 'client_id']);
+                ->orderBy('sales_date','desc')->select(['id','sales_amount', 'sales_date','payment_status',
+                 'client_id']);
             }])
             ->where(['user_id' => $user->id, 'id' => $client_id])
             ->first(['id', 'name', 'address', 'location_area_id', 'user_id']);

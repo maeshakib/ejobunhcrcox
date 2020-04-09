@@ -17,9 +17,15 @@
 
 
 
-
+Route::post('sign-up', 'UserLoginController@signup');
 Route::post('login', 'UserLoginController@login');
 Route::post('logout', 'UserLoginController@logout');
+Route::get('all-jobs', 'JobDetail@index');
+Route::get('single-job/{id}', 'JobDetail@show');
+Route::post('send', 'UserLoginController@send');
+
+
+
 Route::group(['middleware' => ['api']], function () {
     Route::get('myprofile', 'UserLoginController@myProfile');//1
     Route::post('profile/update', 'UserLoginController@profileUpdate');//1
@@ -29,10 +35,28 @@ Route::group(['middleware' => ['api']], function () {
 
 });
 Route::group(['middleware' => ['api', 'permissions']], function () {
- 
-    Route::apiResource('reference', 'ReferenceController');
 
+
+    Route::put('file-upload/{id}', 'JobseekerPersonalInfoController@fileupload');
+    Route::put('photo-upload/{id}', 'JobseekerPersonalInfoController@photoFileupload');
+
+    Route::apiResource('job-post', 'JobPostController');
+    Route::post('short-list-user', 'JobPostController@shortListUser');
+
+    
+    Route::get('job-cv/{id}', 'JobPostController@singleJobAllCv');
+    Route::get('job-cv-shortlist/{id}', 'JobPostController@singleJobShortlistedCv');
+
+    
+    
+    Route::post('applied-jobs/{id}', 'JobAppliedController@store');
+    Route::get('applied-jobs', 'JobAppliedController@index');
+
+    Route::apiResource('training', 'SpecialTrainingController');
+    Route::apiResource('personal-details', 'JobseekerPersonalInfoController');
+    Route::apiResource('reference', 'ReferenceController');
     Route::apiResource('education', 'EducationController');
+    Route::apiResource('work-experience', 'WorkExperienceController');
 
 
 
@@ -98,7 +122,6 @@ Route::group(['middleware' => ['api', 'permissions']], function () {
 
     Route::post('mio_activity', 'ReportingController@MIO_activity');
 
-    Route::post('send', 'UserLoginController@send');
     Route::get('reset-password/{token}', 'UserLoginController@resetPassword');
  
     Route::post('all-sales', 'ReportingController@getAllSales');
